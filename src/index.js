@@ -4,12 +4,14 @@ const permissionsChecker = require('./permissions-checker.js');
 
 /**
  * Loads the most recent items from the Camera Roll
+ * @param  {Number} [start=0]
+ *         Index to start retrieving items for
  * @param  {Number} [count=5]
  *         Maxmimum number of returned items
  * @return {Promise}
  *         Promise that will return all items once it resolves
  */
-const load = ({ count = 5 } = {}) => {
+const load = ({ start = 0, count = 5} = {}) => {
 	if (!window.galleryAPI) {
 		throw new Error('Gallery API is not available. Add https://github.com/SuryaL/cordova-gallery-api.git to your config.xml.');
 	}
@@ -24,7 +26,7 @@ const load = ({ count = 5 } = {}) => {
 		.then(items => {
 			// Limit number of items for which the data is looked up (because
 			// it's expensive)
-			const limitedItems = items.slice(0, count);
+			const limitedItems = items.slice(start, start + count);
 
 			// Enrich items with their thumbnail
 			const promises = limitedItems.map(item => getMediaThumbnail(item));

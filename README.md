@@ -45,6 +45,7 @@ The `load` method supports optional parameters:
 ```javascript
 Collaborne.CordovaGallery.load({
     albumType: 'PHAssetCollectionSubtypeSmartAlbumUserLibrary',
+    start: 5,
     count: 10
 });
 ```
@@ -54,4 +55,5 @@ Supported options:
 | Option        | Description                                          |
 | ------------- | ---------------------------------------------------- |
 | **albumType** | Type of the album from which the items will be taken |
+| **start**     | Index to start retrieving items for (begins at 0)    |
 | **count**     | Maximal number of items that will be returned        |
