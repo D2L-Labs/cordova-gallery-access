@@ -19,10 +19,15 @@ const load = ({ start = 0, count = 5} = {}) => {
 	return permissionsChecker.ensurePermission(permissionsChecker.Permission.GET_ALBUMS)
 		.then(() => getAlbums())
 		.then(albums => {
-			const album = _findCameraRollAlbum(albums);
+			const allImages = [];
 
-			return getMedia(album);
-		})
+			const promises = [];
+			promises.push(getMedia(_findCameraRollAlbum(albums)));
+			promises.push(getMedia(_findAppSavedAlbum(albums)));
+
+			return Promise.all(promises)
+
+		}).then((result) => flattenAndSort(result))
 		.then(items => {
 			// Limit number of items for which the data is looked up (because
 			// it's expensive)
@@ -33,6 +38,13 @@ const load = ({ start = 0, count = 5} = {}) => {
 
 			return Promise.all(promises);
 		});
+};
+
+// flatten an array of arrays into a single array, then sort by date added
+const flattenAndSort = function flatten(array) {
+	var flattened = array.reduce((a, b) => a.concat(b), []);
+	flattened.sort((a, b) => b.date_added - a.date_added);
+	return flattened;
 };
 
 /**
@@ -55,6 +67,21 @@ const _findCameraRollAlbum = (albums) => {
 
 	throw new Error(`Can't find Camera Roll album. Available albums: ${JSON.stringify(albums)}`);
 };
+
+const _findAppSavedAlbum = (albums) => {
+	const isAppSavedAlbum = albums.find((album) => album.type === 'PHAssetCollectionSubtypeAny');
+	if (isAppSavedAlbum) {
+		return null;
+	}
+
+	const androidAppSavedAlbum = albums.find((album) => album.title === 'Pictures');
+	if (androidAppSavedAlbum) {
+		return androidAppSavedAlbum;
+	}
+
+	throw new Error(`Can\'t find App album. Available albums: ${JSON.stringify(albums)}`);
+};
+
 const getAlbums = () =>
 	new Promise((resolve, reject) => {
 		window.galleryAPI.getAlbums(
@@ -64,6 +91,9 @@ const getAlbums = () =>
 	});
 const getMedia = (album) =>
 	new Promise((resolve, reject) => {
+		if (!album) {
+			return resolve([]);
+		}
 		window.galleryAPI.getMedia(
 			album,
 			items => resolve(items),
